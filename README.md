@@ -1,0 +1,2 @@
+# Transforming-Non-Binary-Tree-to-Binary-Tree-
+Transformasi sebuah Non Binary Tree ke bentuk Binary Tree dengan alokasi  Dinamis (dilakukan balancing dengan menerapkan algoritma AVL terhadap Binary  tree yg terbentuk. Penampilan input (non binary tree) dan output (binatry tree  sebelum dan sesudah dilakukan balancing).  Fitur-fitur untuk traversal,  penetapan level/tingkat tree tsb, kedalaman,dan pencarian suatu node 
