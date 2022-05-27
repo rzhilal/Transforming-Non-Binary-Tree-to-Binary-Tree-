@@ -138,7 +138,13 @@ int main()
 								{
 									printf("\nMasukan Nilai : ");
 									scanf("%d", &inputan1);
-									bRoot(AVL_edit) = deleteNode(&bRoot(AVL_edit), inputan1);
+									if(Info(bRoot(AVL_edit)) == inputan1)
+									{
+										printf("\nDeletion tidak dapat dilakukan pada root\n");
+										system("pause");
+									}
+									else
+										bRoot(AVL_edit) = deleteNode(&bRoot(AVL_edit), inputan1);
 									break;
 								}
 							case 3:
