@@ -1,4 +1,5 @@
 #include "nbtree.h"
+#include "btree.h"
 
 void nbCreate(nbTree *x)
 {//Membuat tree kosong (X.root=NULL)
@@ -9,7 +10,8 @@ nbAddr nbCNode(nbType X)
 {//Alokasi untuk membuat node baru
 	nbAddr newNode;
 	newNode = (nbAddr) malloc(sizeof(nbTreeNode));
-	if (newNode != NULL){
+	if (newNode != NULL) // Ketika alokasi berhasil
+	{
 		FS(newNode)=NULL;
 		Info(newNode)=X;
 		NB(newNode)=NULL;
@@ -30,18 +32,28 @@ void nbInsert(nbTree *tRoot, nbAddr parent, nbType X){
 	nbAddr newNode, temp;
 	newNode=nbCNode(X);
 	if (newNode !=NULL){ //Jika pengalokasian node baru berhasil
-		if (parent==NULL) //JIka belum terdapat root
+		
+		if (Root(*tRoot) == NULL) //JIka belum terdapat root
 			Root(*tRoot)=newNode;
-		else{
-			temp=parent;
-			if (FS(temp) != NULL){
-				temp=FS(temp);
-				while(NB(temp)!=NULL)
-					temp=NB(temp);
-				NB(temp)=newNode;
-			}else
-				FS(temp) = newNode;
-			Parent(newNode) = parent;
+		else
+		{
+			if(parent!=NULL) //Node di insert menjadi anak terakhir, jika parent tidak memiliki FS maka node akan menjadi FS
+			{
+				temp=parent;
+				if (FS(temp) != NULL){
+					temp=FS(temp);
+					while(NB(temp)!=NULL)
+						temp=NB(temp);
+					NB(temp)=newNode;
+				}else
+					FS(temp) = newNode;
+				Parent(newNode) = parent;
+			}
+			else
+			{
+				printf("Parent tidak ada\n");
+				system("pause");
+			}
 		}
 	}
 	else
@@ -52,7 +64,8 @@ void nbInsert(nbTree *tRoot, nbAddr parent, nbType X){
 
 nbAddr nbSearch(nbAddr root, nbType src){
 	nbAddr nSrc;
-	if (root!=NULL){
+	if (root!=NULL)
+	{
 		if (Info(root)==src)
 			return root;
 		else{
@@ -63,21 +76,24 @@ nbAddr nbSearch(nbAddr root, nbType src){
 				return nSrc;
 		}
 	}
-	return NULL;
+	return NULL; // mereturn NULL jika tree kosong
 }
 
-void nbUpgrade(nbAddr *root){
+void nbUpgrade(nbAddr *root)
+{
 	nbAddr temp;
 	temp= NB(*root);
-	if (FS(*root)==NULL)
+	if (FS(*root)==NULL) //jika first son null
 		FS(*root)=temp;
-	while(temp!=NULL){
+	while(temp!=NULL) // jika next brothernya tidak null
+	{
 		Parent(temp)= *root;
 		temp=NB(temp);
 	}
 }
 
-void nbDelete(nbAddr *pDel, nbTree *pTree){
+void nbDelete(nbAddr *pDel, nbTree *pTree)
+{
 	nbAddr pCur;
 	pCur=*pDel;
 	
@@ -89,6 +105,7 @@ void nbDelete(nbAddr *pDel, nbTree *pTree){
 	if (pCur==Root(*pTree) && FS(pCur)==NULL) //kondisi ketika root memiliki 1 elemen
 	{
 		Root(*pTree)=NULL;
+		nbDNode(&pCur);
 		return;
 	}
 	
@@ -165,26 +182,8 @@ void nbDelete(nbAddr *pDel, nbTree *pTree){
 	}	
 }
 
-//void nbDeleteSub(nbAddr *pDel, nbTree *pTree)
-//{
-//	nbAddr pCur;
-//	pCur = *pDel;
-//	
-//	if(Root(*pTree) != NULL)
-//	{
-//		if(*pDel == Root(*pTree))
-//		{
-//			pCur = nbDeleteSub(&(FS(*pDel)), &(*pTree));
-//			if (pCur == NULL)
-//				return nbDeleteSub(&(FS(*pDel)), &(*pTree));
-//			nbDNode(*pDel);
-//		}
-//	}else
-//		printf("Tree kosong");
-//}
-
 void nbPrint(nbAddr node, char tab[]){
-	char tempTab[255];
+	char tempTab[255];	
 	strcpy(tempTab, tab);
 	strcat(tempTab, "-");
 	if (node!=NULL){
@@ -194,80 +193,66 @@ void nbPrint(nbAddr node, char tab[]){
 	}
 }
 
-int nbNumLev(nbTree X)
+void nbtoBinary(bTree *btree, nbTree nbtree)
 {
-	int status = 0;
-	nbAddr pCur;
-	pCur = Root(X);
-	bool counted = true;
+	bAddr bcur;
+	bAddr temp;
+	nbAddr cur;
+	bool resmi;
 	
-	if(Root(X) == NULL)
+	cur = Root(nbtree);
+	bcur = bCNode(Info(cur));
+	bRoot(*btree) = bcur;
+	resmi = true;
+	
+	do
 	{
-		printf("Tree kosong");
-		return -1;
-	}
-	pCur = FS(pCur);
-	status = status +1;
-	while(Parent(pCur) != NULL)
-	{
-		if (FS(pCur)!= NULL && counted)
+		if(FS(cur) != NULL && resmi)
 		{
-			pCur = FS(pCur);
-			if(getLevel(pCur)>status)
-				getLevel(pCur);
-		}
-		else if (NB(pCur)!= NULL)
+			cur = FS(cur);
+			bInsLeft(&bcur, Info(cur), &temp);
+			bcur = temp;
+		} else if (NB(cur) != NULL)
 		{
-			pCur = NB(pCur);
-			if(FS(pCur) != NULL)
-			{
-				pCur = FS(pCur);
-				counted = true;
-				if(getLevel(pCur)>status)
-					status = getLevel(pCur);
-			}else
-				counted = false;
-		}
-		else
+			cur = NB(cur);
+			bInsRight(&bcur, Info(cur), &temp);
+			bcur = temp;
+			resmi = true;
+		} else
 		{
-			pCur = Parent(pCur);
-			counted = false;
+			cur = Parent(cur);
+			if(NB(cur)!= NULL)
+				bcur = bSearch(bRoot(*btree), Info(cur));
+			resmi = false;
 		}
-	}
-	return status;
+	} while(Parent(cur) != NULL);
 }
 
-int getLevel(nbAddr Node)
+void Preorder(nbAddr node)
 {
-	int level = 0;
-	while ( Parent(Node) != NULL)
-	{
-		Node = Parent(Node);
-		level++;
-	}
-	return level;
-}
-
-int degree(nbAddr Node)
-{
-	int total;
-	if(FS(Node) == NULL)
-		return 0;
-	else
-	{
-		Node = FS(Node);
-		total = 1;
-		while(NB(Node) != NULL)
-		{
-			Node = NB(Node);
-			total++;
-		}
-		return total;
+	if (node!=NULL){
+		printf("%d ",Info(node));
+		Preorder(FS(node));
+		Preorder(NB(node));
 	}
 }
 
-int getHeight (nbAddr Node, nbTree X)
+void Postorder(nbAddr node)
 {
-	return nbNumLev(X) - getLevel(Node);	
+	if (node!=NULL){
+		Postorder(FS(node));
+		printf("%d ",Info(node));
+		Postorder(NB(node));
+	}
 }
 
+void Inorder(nbAddr node)
+{
+	if (node!=NULL){
+		Inorder(FS(node));
+		Inorder(NB(node));
+		printf("%d ",Info(node));
+	}
+}
+
+	
